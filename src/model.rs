@@ -1,7 +1,4 @@
-use std::collections::BTreeMap;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::io::{Read};
 
 #[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct IngredientItem {
@@ -10,16 +7,6 @@ pub struct IngredientItem {
 }
 
 impl IngredientItem {
-   pub(crate) fn from_name(name: String) -> Self {
-       let is_allergen = lookup_allergen(&name);
-       IngredientItem {
-           basicInfo: BasicIngredientItem {
-               standard_ingredient: StandardIngredient {name, is_allergen},
-               amount: 0,
-           },
-           additionalInfo: AdditionalInfo::None,
-       }
-   }
     pub(crate) fn from_name_amount(name: String, amount: i32) -> Self {
         let is_allergen = lookup_allergen(&name);
         IngredientItem {
@@ -59,8 +46,7 @@ pub struct StandardIngredient {
     pub name: String,
     pub is_allergen: bool
 }
-pub fn sorted_ingredient_list(ingredients: BTreeMap<usize, IngredientItem>) -> String {
-    let mut ingredients = ingredients.values().cloned().into_iter().collect::<Vec<IngredientItem>>();
+pub fn sorted_ingredient_list(mut ingredients:Vec<IngredientItem>) -> String {
     ingredients.sort_by(|a, b| b.basicInfo.amount.cmp(&a.basicInfo.amount));
 
     let ingredients_string =
@@ -93,29 +79,15 @@ pub fn food_db() -> Vec<(String, bool)> {
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(true)
         .from_reader(db_csv.as_bytes());
-    // let mut reader = csv::Reader::from_reader(db_csv.into());
-    // reader.
+
     for record in rdr.records() {
         let record = record.unwrap();
         db.push((
             record.get(0).unwrap().to_string(), {
-                if record.get(1).unwrap().eq("1") {
-                    true
-                } else {
-                    false
-                }
-                // true
+                record.get(1).unwrap()
+                    .eq("1")
             })
         );
     }
     db
-    // db
-    // vec![
-    //     (String::from("Hafer"), false),
-    //     (String::from("Honig"), false),
-    //     (String::from("Erdnüsse"), true),
-    //     (String::from("Haselnüsse"), true),
-    //     (String::from("Honig"), false),
-    //     (String::from("Mandelmus"), false),
-    // ]
 }
